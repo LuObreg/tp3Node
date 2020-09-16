@@ -96,23 +96,20 @@ app.post("/libro", async (req, res)=>{
     }
 });
 
-//Delete 
+//Delete --> en realidad hicimos borrado lógico con update
 
-app.delete("/libro/:id", async (req, res)=>{
+app.put("/libro/:id", async (req, res)=>{
     try{
         let id = req.params.id;
+        let borrado = {
+            deleted: 1
+        }
 
-        let respuesta = null;
+        await LibroModel.findByIdAndUpdate(id, borrado);
 
-        respuesta = await LibroModel.findByIdAndDelete(id);
-
-        let LibroGuardado = await LibroModel.findById(id);
-
-        LibroGuardado.deleted = 1;
-
-        await LibroModel.findByIdAndUpdate(id, LibroGuardado);
-
+        console.log("deleted");
         res.status(200).send({"message": "OK"})
+
     }
     catch(e){
         console.log(e);
