@@ -57,6 +57,7 @@ app.post("/libro", async (req, res)=>{
         let gender = req.body.gender;
 
         //validaciones
+        //evitar que mande datos vacíos
         if(name == undefined){
             throw new Error("No enviaste nombre");
         }
@@ -75,14 +76,20 @@ app.post("/libro", async (req, res)=>{
         if(gender == '' ){
             throw new Error("El  genero no puede estar vacio");
         }
-
+        //evitar que envíe un género inexistente
+        let generoExiste = await GeneroModel.findById(gender);
+        if(!generoExiste){
+            throw new Error("El género no existe");
+        }
         //evitar que cargue dos veces el mismo libro
-        libroExiste = await LibroModel.find({name:name});
+        
+        let libroExiste = null;
+        libroExiste = await LibroModel.findOne({name:name});
         if(libroExiste){
             throw new Error("El libro ya existe");
         }
         
-
+    // armar el objeto que vamos a guardar
         let book = {
         name:  name,
         author: author,
