@@ -75,14 +75,22 @@ app.post("/libro", async (req, res)=>{
         if(gender == '' ){
             throw new Error("El  genero no puede estar vacio");
         }
+
+        //evitar que cargue dos veces el mismo libro
+        libroExiste = await LibroModel.find({name:name});
+        if(libroExiste){
+            throw new Error("El libro ya existe");
+        }
         
 
         let book = {
         name:  name,
         author: author,
         gender: gender,
-        lended: " ",
+        lended: "",
         deleted: 0
+        //Quedó el deleted: 0 en los libros de la base de datos por haber implementado inicialmente el borrado lógico, pero la consigna pedía un DELETE que borra físicamente
+
         }
 
         let bookSave = await LibroModel.create(book);
@@ -96,26 +104,6 @@ app.post("/libro", async (req, res)=>{
     }
 });
 
-//Delete --> en realidad hicimos borrado lógico con update
-
-app.put("/libro/:id", async (req, res)=>{
-    try{
-        let id = req.params.id;
-        let borrado = {
-            deleted: 1
-        }
-
-        await LibroModel.findByIdAndUpdate(id, borrado);
-
-        console.log("deleted");
-        res.status(200).send({"message": "OK"})
-
-    }
-    catch(e){
-        console.log(e);
-        res.status(422).send({error: e});
-    }
-});
 
 // Get, para todos los libros
 app.get("/libro", async (req, res)=>{
@@ -158,6 +146,13 @@ app.put("/libro/:id", async (req, res)=>{
         let prestamo = {
             lended: lended
         }
+        let libroPrestado = await LibroModel.findById(id)
+        console.log(libroPrestado)
+        if(lended != ""){
+            if(libroPrestado.lended != ""){
+                throw new Error("El libro está prestado a otra persona", libroPrestado.lended)
+            }
+        }
 
         await LibroModel.findByIdAndUpdate(id, prestamo);
 
@@ -169,6 +164,18 @@ app.put("/libro/:id", async (req, res)=>{
     catch(e){
         console.log(e);
         res.status(422).send({error: e})
+    }
+});
+//Delete
+app.delete("/libro/:id", async (req, res)=>{
+    try{
+        let id = req.params.id;
+        await LibroModel.findByIdAndDelete(id);
+        res.status(200).send({message: "Se borró correctamente"});
+    }
+    catch(e){
+        console.log(e);
+        res.status(422).send({error: e});
     }
 });
 
@@ -189,35 +196,6 @@ const GeneroModel = mongoose.model("generos", GeneroSchema);
 
 
 // CRUD /genero
-//Get todos los géneros
-app.get("/genero", async (req, res)=>{
-    try{
-        let respuesta = null;
-
-        respuesta = await GeneroModel.find({deleted: 0});
-        
-        res.status(200).send(respuesta);
-    }
-    catch(e){
-        console.log(e);
-        res.status(422).send({error: e});
-    }
-});
-//GET género por id
-app.get("/genero/:id", async (req, res)=>{
-    try{
-        let id = req.params.id;
-        let respuesta = null;
-
-        respuesta = await GeneroModel.findById(id);
-
-        res.status(200).send(respuesta);
-    }
-    catch(e){
-        console.log(e);
-        res.status(422).send({error: e});
-    }
-});
 //POST nuevo género
 app.post("/genero", async (req, res)=>{
     try{
@@ -253,6 +231,38 @@ app.post("/genero", async (req, res)=>{
         res.status(422).send({error: e});
     }
 });
+//Get todos los géneros
+app.get("/genero", async (req, res)=>{
+    try{
+        let respuesta = null;
+
+        respuesta = await GeneroModel.find({deleted: 0});
+        
+        res.status(200).send(respuesta);
+    }
+    catch(e){
+        console.log(e);
+        res.status(422).send({error: e});
+    }
+});
+//GET género por id
+app.get("/genero/:id", async (req, res)=>{
+    try{
+        let id = req.params.id;
+        let respuesta = null;
+
+        respuesta = await GeneroModel.findById(id);
+
+        res.status(200).send(respuesta);
+    }
+    catch(e){
+        console.log(e);
+        res.status(422).send({error: e});
+    }
+});
+/* Esta parte no estaba en la consigna!
+
+
 //DELETE borrar género
 app.delete("/genero/:id", async (req, res)=>{
     try{
@@ -323,7 +333,7 @@ app.put("/genero/:id", async (req, res)=>{
         console.log(e);
         res.status(422).send({error: e});
     }
-});
+});*/
 
 ///////********************************/////////
 ///////********************************/////////
